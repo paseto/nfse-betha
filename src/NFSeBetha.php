@@ -29,7 +29,7 @@ class NFSeBetha implements NFSeBethaInterface
     private $xmlSigner;
 
     // Betha NFSe service endpoints
-    const LOCAL_WSDL = 'https://paseto.github.com/nfse-betha/wsdl/modified_wsdl.xml';
+    const LOCAL_WSDL = 'https://paseto.github.io/modified_wsdl.xml';
     const SERVICE_URL = 'https://nota-eletronica.betha.cloud/rps/ws';
     const NAMESPACE_URI = 'http://www.betha.com.br/e-nota-contribuinte-ws';
 
