@@ -1,0 +1,82 @@
+# Composer
+/vendor/
+composer.lock
+
+# Security sensitive files
+certificates/*.pfx
+certificates/*.p12
+certificates/*.pem
+certificates/*.key
+certificates/*.crt
+*.pfx
+*.p12
+*.pem
+*.key
+*.crt
+
+# Configuration files with sensitive data
+config.php
+.env
+.env.local
+.env.*.local
+
+# Log files
+*.log
+logs/
+storage/logs/
+
+# Cache and temporary files
+cache/
+tmp/
+temp/
+*.tmp
+*.cache
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Testing
+/tests/coverage/
+.phpunit.result.cache
+phpunit.xml
+
+# Static analysis
+.phpstan.neon
+.phpcs.xml
+phpcs.xml
+phpstan.neon
+
+# Build artifacts
+build/
+dist/
+.build/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Example and test files (keep structure but remove sensitive content)
+examples/local_*.php
+test_*.php
+debug_*.php
+sample_*.php
+
+# Documentation build
+/docs/_build/
+/docs/build/
+
+# Backup files
+*.bak
+*.backup
+*~

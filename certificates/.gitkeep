@@ -1,0 +1,25 @@
+# Certificates Directory
+
+This directory should contain your .pfx certificate files for NFSe Betha integration.
+
+**Important:** Certificate files should NOT be committed to version control for security reasons.
+
+## Setup Instructions:
+
+1. Place your .pfx certificate file in this directory
+2. Update the certificate path and password in the configuration
+3. Ensure proper file permissions (readable by web server only)
+
+## Example:
+```
+certificates/
+├── .gitkeep              # This file (for git tracking)
+├── certificado.pfx       # Your certificate file (not in git)
+└── README.md             # Instructions (optional)
+```
+
+## Security Notes:
+- Keep certificate files secure and private
+- Use environment variables for passwords in production
+- Regularly rotate certificates as needed
+- Monitor certificate expiration dates 

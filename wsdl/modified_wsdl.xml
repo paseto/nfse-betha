@@ -1,0 +1,337 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<definitions name='NfseWSService' targetNamespace='http://www.betha.com.br/e-nota-contribuinte-ws' xmlns='http://schemas.xmlsoap.org/wsdl/' xmlns:soap='http://schemas.xmlsoap.org/wsdl/soap/' xmlns:tns='http://www.betha.com.br/e-nota-contribuinte-ws' xmlns:xsd='http://www.w3.org/2001/XMLSchema'>
+ <types>
+  <xs:schema targetNamespace='http://www.betha.com.br/e-nota-contribuinte-ws' version='1.0' xmlns:tns='http://www.betha.com.br/e-nota-contribuinte-ws' xmlns:xs='http://www.w3.org/2001/XMLSchema'>
+   <xs:element name='CancelarNfse' type='tns:CancelarNfse'/>
+   <xs:element name='CancelarNfseResponse' type='tns:CancelarNfseResponse'/>
+   <xs:element name='ConsultarLoteRps' type='tns:ConsultarLoteRps'/>
+   <xs:element name='ConsultarLoteRpsResponse' type='tns:ConsultarLoteRpsResponse'/>
+   <xs:element name='ConsultarNfseFaixa' type='tns:ConsultarNfseFaixa'/>
+   <xs:element name='ConsultarNfseFaixaResponse' type='tns:ConsultarNfseFaixaResponse'/>
+   <xs:element name='ConsultarNfsePorRps' type='tns:ConsultarNfsePorRps'/>
+   <xs:element name='ConsultarNfsePorRpsResponse' type='tns:ConsultarNfsePorRpsResponse'/>
+   <xs:element name='ConsultarNfseServicoPrestado' type='tns:ConsultarNfseServicoPrestado'/>
+   <xs:element name='ConsultarNfseServicoPrestadoResponse' type='tns:ConsultarNfseServicoPrestadoResponse'/>
+   <xs:element name='ConsultarNfseServicoTomado' type='tns:ConsultarNfseServicoTomado'/>
+   <xs:element name='ConsultarNfseServicoTomadoResponse' type='tns:ConsultarNfseServicoTomadoResponse'/>
+   <xs:element name='GerarNfse' type='tns:GerarNfse'/>
+   <xs:element name='GerarNfseResponse' type='tns:GerarNfseResponse'/>
+   <xs:element name='RecepcionarLoteRps' type='tns:RecepcionarLoteRps'/>
+   <xs:element name='RecepcionarLoteRpsResponse' type='tns:RecepcionarLoteRpsResponse'/>
+   <xs:element name='RecepcionarLoteRpsSincrono' type='tns:RecepcionarLoteRpsSincrono'/>
+   <xs:element name='RecepcionarLoteRpsSincronoResponse' type='tns:RecepcionarLoteRpsSincronoResponse'/>
+   <xs:element name='SubstituirNfse' type='tns:SubstituirNfse'/>
+   <xs:element name='SubstituirNfseResponse' type='tns:SubstituirNfseResponse'/>
+   <xs:complexType name='CancelarNfse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='nfseCabecMsg' type='xs:string'/>
+     <xs:element minOccurs='0' name='nfseDadosMsg' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='CancelarNfseResponse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='return' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='ConsultarLoteRps'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='nfseCabecMsg' type='xs:string'/>
+     <xs:element minOccurs='0' name='nfseDadosMsg' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='ConsultarLoteRpsResponse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='return' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='ConsultarNfseFaixa'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='nfseCabecMsg' type='xs:string'/>
+     <xs:element minOccurs='0' name='nfseDadosMsg' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='ConsultarNfseFaixaResponse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='return' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='ConsultarNfsePorRps'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='nfseCabecMsg' type='xs:string'/>
+     <xs:element minOccurs='0' name='nfseDadosMsg' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='ConsultarNfsePorRpsResponse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='return' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='ConsultarNfseServicoPrestado'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='nfseCabecMsg' type='xs:string'/>
+     <xs:element minOccurs='0' name='nfseDadosMsg' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='ConsultarNfseServicoPrestadoResponse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='return' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='ConsultarNfseServicoTomado'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='nfseCabecMsg' type='xs:string'/>
+     <xs:element minOccurs='0' name='nfseDadosMsg' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='ConsultarNfseServicoTomadoResponse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='return' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='GerarNfse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='nfseCabecMsg' type='xs:string'/>
+     <xs:element minOccurs='0' name='nfseDadosMsg' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='GerarNfseResponse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='return' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='RecepcionarLoteRps'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='nfseCabecMsg' type='xs:string'/>
+     <xs:element minOccurs='0' name='nfseDadosMsg' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='RecepcionarLoteRpsResponse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='return' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='RecepcionarLoteRpsSincrono'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='nfseCabecMsg' type='xs:string'/>
+     <xs:element minOccurs='0' name='nfseDadosMsg' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='RecepcionarLoteRpsSincronoResponse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='return' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='SubstituirNfse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='nfseCabecMsg' type='xs:string'/>
+     <xs:element minOccurs='0' name='nfseDadosMsg' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+   <xs:complexType name='SubstituirNfseResponse'>
+    <xs:sequence>
+     <xs:element minOccurs='0' name='return' type='xs:string'/>
+    </xs:sequence>
+   </xs:complexType>
+  </xs:schema>
+ </types>
+ <message name='NfseWS_CancelarNfseResponse'>
+  <part element='tns:CancelarNfseResponse' name='CancelarNfseResponse'></part>
+ </message>
+ <message name='NfseWS_ConsultarNfseServicoTomado'>
+  <part element='tns:ConsultarNfseServicoTomado' name='ConsultarNfseServicoTomado'></part>
+ </message>
+ <message name='NfseWS_ConsultarNfseServicoTomadoResponse'>
+  <part element='tns:ConsultarNfseServicoTomadoResponse' name='ConsultarNfseServicoTomadoResponse'></part>
+ </message>
+ <message name='NfseWS_CancelarNfse'>
+  <part element='tns:CancelarNfse' name='CancelarNfse'></part>
+ </message>
+ <message name='NfseWS_GerarNfseResponse'>
+  <part element='tns:GerarNfseResponse' name='GerarNfseResponse'></part>
+ </message>
+ <message name='NfseWS_ConsultarNfsePorRps'>
+  <part element='tns:ConsultarNfsePorRps' name='ConsultarNfsePorRps'></part>
+ </message>
+ <message name='NfseWS_RecepcionarLoteRpsSincronoResponse'>
+  <part element='tns:RecepcionarLoteRpsSincronoResponse' name='RecepcionarLoteRpsSincronoResponse'></part>
+ </message>
+ <message name='NfseWS_RecepcionarLoteRpsResponse'>
+  <part element='tns:RecepcionarLoteRpsResponse' name='RecepcionarLoteRpsResponse'></part>
+ </message>
+ <message name='NfseWS_ConsultarLoteRpsResponse'>
+  <part element='tns:ConsultarLoteRpsResponse' name='ConsultarLoteRpsResponse'></part>
+ </message>
+ <message name='NfseWS_SubstituirNfse'>
+  <part element='tns:SubstituirNfse' name='SubstituirNfse'></part>
+ </message>
+ <message name='NfseWS_ConsultarNfseServicoPrestadoResponse'>
+  <part element='tns:ConsultarNfseServicoPrestadoResponse' name='ConsultarNfseServicoPrestadoResponse'></part>
+ </message>
+ <message name='NfseWS_SubstituirNfseResponse'>
+  <part element='tns:SubstituirNfseResponse' name='SubstituirNfseResponse'></part>
+ </message>
+ <message name='NfseWS_RecepcionarLoteRpsSincrono'>
+  <part element='tns:RecepcionarLoteRpsSincrono' name='RecepcionarLoteRpsSincrono'></part>
+ </message>
+ <message name='NfseWS_ConsultarLoteRps'>
+  <part element='tns:ConsultarLoteRps' name='ConsultarLoteRps'></part>
+ </message>
+ <message name='NfseWS_GerarNfse'>
+  <part element='tns:GerarNfse' name='GerarNfse'></part>
+ </message>
+ <message name='NfseWS_ConsultarNfseServicoPrestado'>
+  <part element='tns:ConsultarNfseServicoPrestado' name='ConsultarNfseServicoPrestado'></part>
+ </message>
+ <message name='NfseWS_ConsultarNfseFaixa'>
+  <part element='tns:ConsultarNfseFaixa' name='ConsultarNfseFaixa'></part>
+ </message>
+ <message name='NfseWS_ConsultarNfseFaixaResponse'>
+  <part element='tns:ConsultarNfseFaixaResponse' name='ConsultarNfseFaixaResponse'></part>
+ </message>
+ <message name='NfseWS_RecepcionarLoteRps'>
+  <part element='tns:RecepcionarLoteRps' name='RecepcionarLoteRps'></part>
+ </message>
+ <message name='NfseWS_ConsultarNfsePorRpsResponse'>
+  <part element='tns:ConsultarNfsePorRpsResponse' name='ConsultarNfsePorRpsResponse'></part>
+ </message>
+ <portType name='NfseWS'>
+  <operation name='CancelarNfse' parameterOrder='CancelarNfse'>
+   <input message='tns:NfseWS_CancelarNfse'></input>
+   <output message='tns:NfseWS_CancelarNfseResponse'></output>
+  </operation>
+  <operation name='ConsultarLoteRps' parameterOrder='ConsultarLoteRps'>
+   <input message='tns:NfseWS_ConsultarLoteRps'></input>
+   <output message='tns:NfseWS_ConsultarLoteRpsResponse'></output>
+  </operation>
+  <operation name='ConsultarNfseFaixa' parameterOrder='ConsultarNfseFaixa'>
+   <input message='tns:NfseWS_ConsultarNfseFaixa'></input>
+   <output message='tns:NfseWS_ConsultarNfseFaixaResponse'></output>
+  </operation>
+  <operation name='ConsultarNfsePorRps' parameterOrder='ConsultarNfsePorRps'>
+   <input message='tns:NfseWS_ConsultarNfsePorRps'></input>
+   <output message='tns:NfseWS_ConsultarNfsePorRpsResponse'></output>
+  </operation>
+  <operation name='ConsultarNfseServicoPrestado' parameterOrder='ConsultarNfseServicoPrestado'>
+   <input message='tns:NfseWS_ConsultarNfseServicoPrestado'></input>
+   <output message='tns:NfseWS_ConsultarNfseServicoPrestadoResponse'></output>
+  </operation>
+  <operation name='ConsultarNfseServicoTomado' parameterOrder='ConsultarNfseServicoTomado'>
+   <input message='tns:NfseWS_ConsultarNfseServicoTomado'></input>
+   <output message='tns:NfseWS_ConsultarNfseServicoTomadoResponse'></output>
+  </operation>
+  <operation name='GerarNfse' parameterOrder='GerarNfse'>
+   <input message='tns:NfseWS_GerarNfse'></input>
+   <output message='tns:NfseWS_GerarNfseResponse'></output>
+  </operation>
+  <operation name='RecepcionarLoteRps' parameterOrder='RecepcionarLoteRps'>
+   <input message='tns:NfseWS_RecepcionarLoteRps'></input>
+   <output message='tns:NfseWS_RecepcionarLoteRpsResponse'></output>
+  </operation>
+  <operation name='RecepcionarLoteRpsSincrono' parameterOrder='RecepcionarLoteRpsSincrono'>
+   <input message='tns:NfseWS_RecepcionarLoteRpsSincrono'></input>
+   <output message='tns:NfseWS_RecepcionarLoteRpsSincronoResponse'></output>
+  </operation>
+  <operation name='SubstituirNfse' parameterOrder='SubstituirNfse'>
+   <input message='tns:NfseWS_SubstituirNfse'></input>
+   <output message='tns:NfseWS_SubstituirNfseResponse'></output>
+  </operation>
+ </portType>
+ <binding name='NfseWSBinding' type='tns:NfseWS'>
+  <soap:binding style='document' transport='http://schemas.xmlsoap.org/soap/http'/>
+  <operation name='CancelarNfse'>
+   <soap:operation soapAction='CancelarNfseEnvio'/>
+   <input>
+    <soap:body use='literal'/>
+   </input>
+   <output>
+    <soap:body use='literal'/>
+   </output>
+  </operation>
+  <operation name='ConsultarLoteRps'>
+   <soap:operation soapAction='ConsultarLoteRpsEnvio'/>
+   <input>
+    <soap:body use='literal'/>
+   </input>
+   <output>
+    <soap:body use='literal'/>
+   </output>
+  </operation>
+  <operation name='ConsultarNfseFaixa'>
+   <soap:operation soapAction='ConsultarNfseFaixaEnvio'/>
+   <input>
+    <soap:body use='literal'/>
+   </input>
+   <output>
+    <soap:body use='literal'/>
+   </output>
+  </operation>
+  <operation name='ConsultarNfsePorRps'>
+   <soap:operation soapAction='ConsultarNfseRpsEnvio'/>
+   <input>
+    <soap:body use='literal'/>
+   </input>
+   <output>
+    <soap:body use='literal'/>
+   </output>
+  </operation>
+  <operation name='ConsultarNfseServicoPrestado'>
+   <soap:operation soapAction='ConsultarNfseServicoPrestadoEnvio'/>
+   <input>
+    <soap:body use='literal'/>
+   </input>
+   <output>
+    <soap:body use='literal'/>
+   </output>
+  </operation>
+  <operation name='ConsultarNfseServicoTomado'>
+   <soap:operation soapAction='ConsultarNfseServicoTomadoEnvio'/>
+   <input>
+    <soap:body use='literal'/>
+   </input>
+   <output>
+    <soap:body use='literal'/>
+   </output>
+  </operation>
+  <operation name='GerarNfse'>
+   <soap:operation soapAction='GerarNfseEnvio'/>
+   <input>
+    <soap:body use='literal'/>
+   </input>
+   <output>
+    <soap:body use='literal'/>
+   </output>
+  </operation>
+  <operation name='RecepcionarLoteRps'>
+   <soap:operation soapAction='RecepcionarLoteRpsEnvio'/>
+   <input>
+    <soap:body use='literal'/>
+   </input>
+   <output>
+    <soap:body use='literal'/>
+   </output>
+  </operation>
+  <operation name='RecepcionarLoteRpsSincrono'>
+   <soap:operation soapAction='RecepcionarLoteRpsSincronoEnvio'/>
+   <input>
+    <soap:body use='literal'/>
+   </input>
+   <output>
+    <soap:body use='literal'/>
+   </output>
+  </operation>
+  <operation name='SubstituirNfse'>
+   <soap:operation soapAction='SubstituirNfseEnvio'/>
+   <input>
+    <soap:body use='literal'/>
+   </input>
+   <output>
+    <soap:body use='literal'/>
+   </output>
+  </operation>
+ </binding>
+ <service name='NfseWSService'>
+  <port binding='tns:NfseWSBinding' name='nfseSOAP'>
+   <soap:address location='https://nota-eletronica.betha.cloud/rps/ws'/>
+  </port>
+ </service>
+</definitions>
