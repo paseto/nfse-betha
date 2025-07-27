@@ -30,7 +30,8 @@ class NFSeBetha implements NFSeBethaInterface
     private $xmlSigner;
 
     // Betha NFSe service endpoints
-    const LOCAL_WSDL = 'wsdl/modified_wsdl.xml';
+//    const LOCAL_WSDL = 'wsdl/modified_wsdl.xml';
+    const LOCAL_WSDL = 'https://paseto.github.io/modified_wsdl.xml';
     const SERVICE_URL = 'https://nota-eletronica.betha.cloud/rps/ws';
     const NAMESPACE_URI = 'http://www.betha.com.br/e-nota-contribuinte-ws';
 
@@ -40,18 +41,18 @@ class NFSeBetha implements NFSeBethaInterface
      * @param string $certificateContent Content of the .pfx certificate file (binary)
      * @param string $certificatePassword Password for the certificate
      * @param array $prestadorData Prestador (service provider) data
-     * @param string|null $serviceUrl Service URL (optional)
+     * @param bool|true $useSoap Use Soap or Curl (optional)
      * @throws Exception If certificate validation fails
      */
-    public function __construct($certificateContent, $certificatePassword, $prestadorData, $serviceUrl = null)
+    public function __construct($certificateContent, $certificatePassword, $prestadorData, bool $useSoap = true)
     {
         $this->certificateContent = $certificateContent;
         $this->certificatePassword = $certificatePassword;
         $this->prestadorData = $prestadorData;
-        $this->serviceUrl = $serviceUrl ?: self::SERVICE_URL;
+        $this->serviceUrl = self::SERVICE_URL;
 
         $this->validateCertificate();
-        $this->initializeConnection();
+        $this->initializeConnection($useSoap);
         $this->initializeXMLSigner();
     }
 
@@ -80,13 +81,15 @@ class NFSeBetha implements NFSeBethaInterface
     /**
      * Initialize connection
      */
-    private function initializeConnection()
+    private function initializeConnection($useSoap)
     {
         try {
-            $this->initializeSoapClient();
+            if ($useSoap) {
+                $this->initializeSoapClient();
+            }
         } catch (Exception $e) {
-            $this->useCurlMode = true;
         }
+        $this->useCurlMode = true;
     }
 
     /**
@@ -98,21 +101,6 @@ class NFSeBetha implements NFSeBethaInterface
     }
 
     /**
-     * Create temporary certificate file for SOAP client
-     *
-     * @return string Temporary file path
-     * @throws Exception If unable to create temporary file
-     */
-    private function createTempCertificateFile()
-    {
-        $tempFile = tempnam(sys_get_temp_dir(), 'nfse_cert_');
-        if (file_put_contents($tempFile, $this->certificateContent) === false) {
-            throw new Exception('Unable to create temporary certificate file');
-        }
-        return $tempFile;
-    }
-
-    /**
      * Initialize SOAP client
      *
      * @throws Exception If SOAP client initialization fails
@@ -120,7 +108,7 @@ class NFSeBetha implements NFSeBethaInterface
     private function initializeSoapClient()
     {
         $wsdlPath = realpath(__DIR__ . '/../' . self::LOCAL_WSDL);
-        
+
         if (!$wsdlPath || !file_exists($wsdlPath)) {
             throw new Exception("WSDL file not found: " . (__DIR__ . '/../' . self::LOCAL_WSDL));
         }
