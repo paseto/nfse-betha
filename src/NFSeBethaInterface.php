@@ -17,15 +17,15 @@ interface NFSeBethaInterface
     /**
      * Consult NFSe by service provider
      *
-     * @param array $params Consultation parameters
+     * @param array $params Consultation parameters (without prestador - uses constructor data)
      * @return array|false Response array or false on failure
      */
-    public function consultarNfseServicoPrestado($params);
+    public function consultarNfseServicoPrestado($params = []);
 
     /**
      * Consult NFSe by range
      *
-     * @param array $params Range consultation parameters
+     * @param array $params Range consultation parameters (without prestador - uses constructor data)
      * @return array|false Response array or false on failure
      */
     public function consultarNfseFaixa($params);
@@ -33,7 +33,7 @@ interface NFSeBethaInterface
     /**
      * Generate NFSe from RPS
      *
-     * @param array $rpsData RPS data for NFSe generation
+     * @param array $rpsData RPS data for NFSe generation (without prestador - uses constructor data)
      * @return array|false Response array or false on failure
      */
     public function gerarNfse($rpsData);
@@ -41,7 +41,7 @@ interface NFSeBethaInterface
     /**
      * Cancel NFSe
      *
-     * @param array $cancelData Cancellation data
+     * @param array $cancelData Cancellation data (without prestador - uses constructor data)
      * @return array|false Response array or false on failure
      */
     public function cancelarNfse($cancelData);
@@ -49,7 +49,7 @@ interface NFSeBethaInterface
     /**
      * Send RPS batch
      *
-     * @param array $loteData Batch data
+     * @param array $loteData Batch data (without prestador - uses constructor data)
      * @return array|false Response array or false on failure
      */
     public function enviarLoteRps($loteData);
@@ -57,7 +57,7 @@ interface NFSeBethaInterface
     /**
      * Consult RPS batch status
      *
-     * @param array $params Batch consultation parameters
+     * @param array $params Batch consultation parameters (without prestador - uses constructor data)
      * @return array|false Response array or false on failure
      */
     public function consultarLoteRps($params);

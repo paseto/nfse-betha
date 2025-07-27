@@ -21,30 +21,33 @@ use DOMXPath;
 class NFSeBetha implements NFSeBethaInterface
 {
     private $serviceUrl;
-    private $certificatePath;
+    private $certificateContent;
     private $certificatePassword;
+    private $prestadorData;
     private $soapClient;
     private $lastError;
     private $useCurlMode = false;
     private $xmlSigner;
 
     // Betha NFSe service endpoints
-    const LOCAL_WSDL = 'https://paseto.github.io/modified_wsdl.xml';
+    const LOCAL_WSDL = 'wsdl/modified_wsdl.xml';
     const SERVICE_URL = 'https://nota-eletronica.betha.cloud/rps/ws';
     const NAMESPACE_URI = 'http://www.betha.com.br/e-nota-contribuinte-ws';
 
     /**
      * Constructor
      *
-     * @param string|null $serviceUrl Service URL (optional)
-     * @param string $certificatePath Path to the .pfx certificate file
+     * @param string $certificateContent Content of the .pfx certificate file (binary)
      * @param string $certificatePassword Password for the certificate
+     * @param array $prestadorData Prestador (service provider) data
+     * @param string|null $serviceUrl Service URL (optional)
      * @throws Exception If certificate validation fails
      */
-    public function __construct($certificatePath, $certificatePassword, $serviceUrl = null)
+    public function __construct($certificateContent, $certificatePassword, $prestadorData, $serviceUrl = null)
     {
-        $this->certificatePath = $certificatePath;
+        $this->certificateContent = $certificateContent;
         $this->certificatePassword = $certificatePassword;
+        $this->prestadorData = $prestadorData;
         $this->serviceUrl = $serviceUrl ?: self::SERVICE_URL;
 
         $this->validateCertificate();
@@ -53,23 +56,18 @@ class NFSeBetha implements NFSeBethaInterface
     }
 
     /**
-     * Validate certificate file
+     * Validate certificate content
      *
      * @throws Exception If certificate is invalid or expired
      */
     private function validateCertificate()
     {
-        if (!file_exists($this->certificatePath)) {
-            throw new Exception("Certificate file not found: {$this->certificatePath}");
-        }
-
-        $pfxContent = file_get_contents($this->certificatePath);
-        if ($pfxContent === false) {
-            throw new Exception('Unable to read certificate file');
+        if (empty($this->certificateContent)) {
+            throw new Exception('Certificate content is empty');
         }
 
         $certificateData = [];
-        if (!openssl_pkcs12_read($pfxContent, $certificateData, $this->certificatePassword)) {
+        if (!openssl_pkcs12_read($this->certificateContent, $certificateData, $this->certificatePassword)) {
             throw new Exception('Unable to read certificate or incorrect password');
         }
 
@@ -96,7 +94,22 @@ class NFSeBetha implements NFSeBethaInterface
      */
     private function initializeXMLSigner()
     {
-        $this->xmlSigner = new XMLSigner($this->certificatePath, $this->certificatePassword);
+        $this->xmlSigner = new XMLSigner($this->certificateContent, $this->certificatePassword);
+    }
+
+    /**
+     * Create temporary certificate file for SOAP client
+     *
+     * @return string Temporary file path
+     * @throws Exception If unable to create temporary file
+     */
+    private function createTempCertificateFile()
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'nfse_cert_');
+        if (file_put_contents($tempFile, $this->certificateContent) === false) {
+            throw new Exception('Unable to create temporary certificate file');
+        }
+        return $tempFile;
     }
 
     /**
@@ -106,12 +119,13 @@ class NFSeBetha implements NFSeBethaInterface
      */
     private function initializeSoapClient()
     {
-//        $wsdlPath = __DIR__ . '/../' . self::LOCAL_WSDL;
-//
-//        if (!file_exists($wsdlPath)) {
-//            throw new Exception("WSDL file not found: " . $wsdlPath);
-//        }
+        $wsdlPath = realpath(__DIR__ . '/../' . self::LOCAL_WSDL);
+        
+        if (!$wsdlPath || !file_exists($wsdlPath)) {
+            throw new Exception("WSDL file not found: " . (__DIR__ . '/../' . self::LOCAL_WSDL));
+        }
 
+        // SOAP options for local WSDL loading (no certificate needed for WSDL)
         $soapOptions = [
             'soap_version' => SOAP_1_1,
             'encoding' => 'UTF-8',
@@ -120,14 +134,8 @@ class NFSeBetha implements NFSeBethaInterface
             'connection_timeout' => 30,
             'cache_wsdl' => WSDL_CACHE_NONE,
             'location' => $this->serviceUrl,
+            // Don't use certificate for WSDL loading - only for service calls
             'stream_context' => stream_context_create([
-                'ssl' => [
-                    'verify_peer' => false,
-                    'verify_peer_name' => false,
-                    'allow_self_signed' => true,
-                    'local_cert' => $this->certificatePath,
-                    'passphrase' => $this->certificatePassword
-                ],
                 'http' => [
                     'timeout' => 30,
                     'user_agent' => 'NFSeBetha-PHP-Client/2.0'
@@ -135,27 +143,25 @@ class NFSeBetha implements NFSeBethaInterface
             ])
         ];
 
-        $this->soapClient = new SoapClient(self::LOCAL_WSDL, $soapOptions);
+        // Initialize SOAP client with local WSDL file
+        $this->soapClient = new SoapClient($wsdlPath, $soapOptions);
     }
 
     /**
      * Consult NFSe by service provider
      *
-     * @param array $params Consultation parameters
+     * @param array $params Consultation parameters (without prestador - uses constructor data)
      * @return array|false Response array or false on failure
      */
-    public function consultarNfseServicoPrestado($params)
+    public function consultarNfseServicoPrestado($params = [])
     {
         try {
             if ($this->useCurlMode) {
                 return $this->sendCurlRequest('ConsultarNfseServicoPrestado', $this->buildConsultarNfseServicoPrestadoEnvio($params));
             } else {
-                $cabecMsg = $this->buildCabecalho();
-                $dadosMsg = '<![CDATA[' . $this->buildConsultarNfseServicoPrestadoEnvio($params) . ']]>';
-
                 $request = [
-                    'nfseCabecMsg' => $cabecMsg,
-                    'nfseDadosMsg' => $dadosMsg
+                    'nfseCabecMsg' => $this->buildCabecalho(),
+                    'nfseDadosMsg' => $this->buildConsultarNfseServicoPrestadoEnvio($params)
                 ];
 
                 $response = $this->soapClient->ConsultarNfseServicoPrestado($request);
@@ -170,7 +176,7 @@ class NFSeBetha implements NFSeBethaInterface
     /**
      * Consult NFSe by range
      *
-     * @param array $params Range consultation parameters
+     * @param array $params Range consultation parameters (without prestador - uses constructor data)
      * @return array|false Response array or false on failure
      */
     public function consultarNfseFaixa($params)
@@ -179,12 +185,9 @@ class NFSeBetha implements NFSeBethaInterface
             if ($this->useCurlMode) {
                 return $this->sendCurlRequest('ConsultarNfseFaixa', $this->buildConsultarNfseFaixaEnvio($params));
             } else {
-                $cabecMsg = $this->buildCabecalho();
-                $dadosMsg = '<![CDATA[' . $this->buildConsultarNfseFaixaEnvio($params) . ']]>';
-
                 $request = [
-                    'nfseCabecMsg' => $cabecMsg,
-                    'nfseDadosMsg' => $dadosMsg
+                    'nfseCabecMsg' => $this->buildCabecalho(),
+                    'nfseDadosMsg' => $this->buildConsultarNfseFaixaEnvio($params)
                 ];
 
                 $response = $this->soapClient->ConsultarNfseFaixa($request);
@@ -199,7 +202,7 @@ class NFSeBetha implements NFSeBethaInterface
     /**
      * Generate NFSe from RPS
      *
-     * @param array $rpsData RPS data for NFSe generation
+     * @param array $rpsData RPS data for NFSe generation (without prestador - uses constructor data)
      * @return array|false Response array or false on failure
      */
     public function gerarNfse($rpsData)
@@ -212,12 +215,9 @@ class NFSeBetha implements NFSeBethaInterface
             if ($this->useCurlMode) {
                 return $this->sendCurlRequest('GerarNfse', $signedRpsXML);
             } else {
-                $cabecMsg = $this->buildCabecalho();
-                $dadosMsg = '<![CDATA[' . $signedRpsXML . ']]>';
-
                 $request = [
-                    'nfseCabecMsg' => $cabecMsg,
-                    'nfseDadosMsg' => $dadosMsg
+                    'nfseCabecMsg' => $this->buildCabecalho(),
+                    'nfseDadosMsg' => $signedRpsXML
                 ];
 
                 $response = $this->soapClient->GerarNfse($request);
@@ -232,7 +232,7 @@ class NFSeBetha implements NFSeBethaInterface
     /**
      * Cancel NFSe
      *
-     * @param array $cancelData Cancellation data
+     * @param array $cancelData Cancellation data (without prestador - uses constructor data)
      * @return array|false Response array or false on failure
      */
     public function cancelarNfse($cancelData)
@@ -245,12 +245,9 @@ class NFSeBetha implements NFSeBethaInterface
             if ($this->useCurlMode) {
                 return $this->sendCurlRequest('CancelarNfse', $signedCancelXML);
             } else {
-                $cabecMsg = $this->buildCabecalho();
-                $dadosMsg = '<![CDATA[' . $signedCancelXML . ']]>';
-
                 $request = [
-                    'nfseCabecMsg' => $cabecMsg,
-                    'nfseDadosMsg' => $dadosMsg
+                    'nfseCabecMsg' => $this->buildCabecalho(),
+                    'nfseDadosMsg' => $signedCancelXML
                 ];
 
                 $response = $this->soapClient->CancelarNfse($request);
@@ -265,7 +262,7 @@ class NFSeBetha implements NFSeBethaInterface
     /**
      * Send RPS batch
      *
-     * @param array $loteData Batch data
+     * @param array $loteData Batch data (without prestador - uses constructor data)
      * @return array|false Response array or false on failure
      */
     public function enviarLoteRps($loteData)
@@ -274,12 +271,9 @@ class NFSeBetha implements NFSeBethaInterface
             if ($this->useCurlMode) {
                 return $this->sendCurlRequest('EnviarLoteRps', $this->buildEnviarLoteRpsEnvio($loteData));
             } else {
-                $cabecMsg = $this->buildCabecalho();
-                $dadosMsg = '<![CDATA[' . $this->buildEnviarLoteRpsEnvio($loteData) . ']]>';
-
                 $request = [
-                    'nfseCabecMsg' => $cabecMsg,
-                    'nfseDadosMsg' => $dadosMsg
+                    'nfseCabecMsg' => $this->buildCabecalho(),
+                    'nfseDadosMsg' => $this->buildEnviarLoteRpsEnvio($loteData)
                 ];
 
                 $response = $this->soapClient->EnviarLoteRps($request);
@@ -294,7 +288,7 @@ class NFSeBetha implements NFSeBethaInterface
     /**
      * Consult RPS batch status
      *
-     * @param array $params Batch consultation parameters
+     * @param array $params Batch consultation parameters (without prestador - uses constructor data)
      * @return array|false Response array or false on failure
      */
     public function consultarLoteRps($params)
@@ -303,12 +297,9 @@ class NFSeBetha implements NFSeBethaInterface
             if ($this->useCurlMode) {
                 return $this->sendCurlRequest('ConsultarLoteRps', $this->buildConsultarLoteRpsEnvio($params));
             } else {
-                $cabecMsg = $this->buildCabecalho();
-                $dadosMsg = '<![CDATA[' . $this->buildConsultarLoteRpsEnvio($params) . ']]>';
-
                 $request = [
-                    'nfseCabecMsg' => $cabecMsg,
-                    'nfseDadosMsg' => $dadosMsg
+                    'nfseCabecMsg' => $this->buildCabecalho(),
+                    'nfseDadosMsg' => $this->buildConsultarLoteRpsEnvio($params)
                 ];
 
                 $response = $this->soapClient->ConsultarLoteRps($request);
@@ -323,11 +314,11 @@ class NFSeBetha implements NFSeBethaInterface
     /**
      * Build SOAP header (cabecalho)
      *
-     * @return string CDATA wrapped header
+     * @return string Header XML content
      */
     private function buildCabecalho()
     {
-        return '<![CDATA[<cabecalho xmlns="' . self::NAMESPACE_URI . '" versao="2.02"><versaoDados>2.02</versaoDados></cabecalho>]]>';
+        return '<cabecalho xmlns="' . self::NAMESPACE_URI . '" versao="2.02"><versaoDados>2.02</versaoDados></cabecalho>';
     }
 
     /**
@@ -340,10 +331,10 @@ class NFSeBetha implements NFSeBethaInterface
     {
         $xml = '<ConsultarNfseServicoPrestadoEnvio xmlns="' . self::NAMESPACE_URI . '">';
 
-        // Prestador
+        // Prestador (using constructor data)
         $xml .= '<Prestador>';
-        $xml .= '<CpfCnpj><Cnpj>' . ($params['prestador']['cnpj'] ?? '') . '</Cnpj></CpfCnpj>';
-        $xml .= '<InscricaoMunicipal>' . ($params['prestador']['inscricao_municipal'] ?? '') . '</InscricaoMunicipal>';
+        $xml .= '<CpfCnpj><Cnpj>' . $this->prestadorData['cnpj'] . '</Cnpj></CpfCnpj>';
+        $xml .= '<InscricaoMunicipal>' . $this->prestadorData['inscricao_municipal'] . '</InscricaoMunicipal>';
         $xml .= '</Prestador>';
 
         // NumeroNfse (optional)
@@ -400,10 +391,10 @@ class NFSeBetha implements NFSeBethaInterface
     {
         $xml = '<ConsultarNfseFaixaEnvio xmlns="' . self::NAMESPACE_URI . '">';
 
-        // Prestador
+        // Prestador (using constructor data)
         $xml .= '<Prestador>';
-        $xml .= '<CpfCnpj><Cnpj>' . ($params['prestador']['cnpj'] ?? '') . '</Cnpj></CpfCnpj>';
-        $xml .= '<InscricaoMunicipal>' . ($params['prestador']['inscricao_municipal'] ?? '') . '</InscricaoMunicipal>';
+        $xml .= '<CpfCnpj><Cnpj>' . $this->prestadorData['cnpj'] . '</Cnpj></CpfCnpj>';
+        $xml .= '<InscricaoMunicipal>' . $this->prestadorData['inscricao_municipal'] . '</InscricaoMunicipal>';
         $xml .= '</Prestador>';
 
         // Faixa
@@ -449,13 +440,11 @@ class NFSeBetha implements NFSeBethaInterface
         $xml .= '<Pedido>';
         $xml .= '<InfPedidoCancelamento Id="InfPedidoCancelamento">';
 
-        // IdentificacaoNfse
+        // IdentificacaoNfse (using constructor prestador data)
         $xml .= '<IdentificacaoNfse>';
         $xml .= '<Numero>' . ($cancelData['numero'] ?? '') . '</Numero>';
-        $xml .= '<CpfCnpj><Cnpj>' . ($cancelData['prestador']['cnpj'] ?? '') . '</Cnpj></CpfCnpj>';
-        if (isset($cancelData['prestador']['inscricao_municipal'])) {
-            $xml .= '<InscricaoMunicipal>' . $cancelData['prestador']['inscricao_municipal'] . '</InscricaoMunicipal>';
-        }
+        $xml .= '<CpfCnpj><Cnpj>' . $this->prestadorData['cnpj'] . '</Cnpj></CpfCnpj>';
+        $xml .= '<InscricaoMunicipal>' . $this->prestadorData['inscricao_municipal'] . '</InscricaoMunicipal>';
         $xml .= '<CodigoMunicipio>' . ($cancelData['codigo_municipio'] ?? '') . '</CodigoMunicipio>';
         $xml .= '</IdentificacaoNfse>';
 
@@ -483,10 +472,8 @@ class NFSeBetha implements NFSeBethaInterface
         $xml .= '<LoteRps versao="2.02">';
 
         $xml .= '<NumeroLote>' . ($loteData['numero_lote'] ?? '') . '</NumeroLote>';
-        $xml .= '<CpfCnpj><Cnpj>' . ($loteData['prestador']['cnpj'] ?? '') . '</Cnpj></CpfCnpj>';
-        if (isset($loteData['prestador']['inscricao_municipal'])) {
-            $xml .= '<InscricaoMunicipal>' . $loteData['prestador']['inscricao_municipal'] . '</InscricaoMunicipal>';
-        }
+        $xml .= '<CpfCnpj><Cnpj>' . $this->prestadorData['cnpj'] . '</Cnpj></CpfCnpj>';
+        $xml .= '<InscricaoMunicipal>' . $this->prestadorData['inscricao_municipal'] . '</InscricaoMunicipal>';
         $xml .= '<QuantidadeRps>' . count($loteData['lista_rps'] ?? []) . '</QuantidadeRps>';
 
         $xml .= '<ListaRps>';
@@ -512,8 +499,8 @@ class NFSeBetha implements NFSeBethaInterface
         $xml = '<ConsultarLoteRpsEnvio xmlns="' . self::NAMESPACE_URI . '">';
 
         $xml .= '<Prestador>';
-        $xml .= '<CpfCnpj><Cnpj>' . ($params['prestador']['cnpj'] ?? '') . '</Cnpj></CpfCnpj>';
-        $xml .= '<InscricaoMunicipal>' . ($params['prestador']['inscricao_municipal'] ?? '') . '</InscricaoMunicipal>';
+        $xml .= '<CpfCnpj><Cnpj>' . $this->prestadorData['cnpj'] . '</Cnpj></CpfCnpj>';
+        $xml .= '<InscricaoMunicipal>' . $this->prestadorData['inscricao_municipal'] . '</InscricaoMunicipal>';
         $xml .= '</Prestador>';
 
         $xml .= '<Protocolo>' . ($params['protocolo'] ?? '') . '</Protocolo>';
@@ -573,10 +560,10 @@ class NFSeBetha implements NFSeBethaInterface
         }
         $xml .= '</Servico>';
 
-        // Prestador
+        // Prestador (using constructor data)
         $xml .= '<Prestador>';
-        $xml .= '<CpfCnpj><Cnpj>' . ($rpsData['prestador']['cnpj'] ?? '') . '</Cnpj></CpfCnpj>';
-        $xml .= '<InscricaoMunicipal>' . ($rpsData['prestador']['inscricao_municipal'] ?? '') . '</InscricaoMunicipal>';
+        $xml .= '<CpfCnpj><Cnpj>' . $this->prestadorData['cnpj'] . '</Cnpj></CpfCnpj>';
+        $xml .= '<InscricaoMunicipal>' . $this->prestadorData['inscricao_municipal'] . '</InscricaoMunicipal>';
         $xml .= '</Prestador>';
 
         // Tomador (optional)
@@ -734,13 +721,8 @@ class NFSeBetha implements NFSeBethaInterface
      */
     private function createTempCertificateFiles()
     {
-        $pfxContent = file_get_contents($this->certificatePath);
-        if ($pfxContent === false) {
-            throw new Exception('Unable to read certificate file');
-        }
-
         $certificateData = [];
-        if (!openssl_pkcs12_read($pfxContent, $certificateData, $this->certificatePassword)) {
+        if (!openssl_pkcs12_read($this->certificateContent, $certificateData, $this->certificatePassword)) {
             throw new Exception('Unable to read certificate or incorrect password');
         }
 
@@ -845,14 +827,20 @@ class NFSeBetha implements NFSeBethaInterface
 
         $result = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
         curl_close($ch);
+
+        $wsdlPath = $this->getWsdlPath();
 
         return [
             'success' => $result !== false && ($httpCode == 200 || $httpCode == 405 || $httpCode == 500),
             'http_code' => $httpCode,
+            'curl_error' => $curlError,
             'service_url' => $this->serviceUrl,
             'using_curl_mode' => $this->useCurlMode,
-            'soap_client_available' => $this->soapClient !== null
+            'soap_client_available' => $this->soapClient !== null,
+            'wsdl_path' => $wsdlPath,
+            'wsdl_exists' => $wsdlPath && file_exists($wsdlPath)
         ];
     }
 
@@ -874,5 +862,60 @@ class NFSeBetha implements NFSeBethaInterface
     public function isUsingCurlMode()
     {
         return $this->useCurlMode;
+    }
+
+    /**
+     * Get prestador data
+     *
+     * @return array Prestador data
+     */
+    public function getPrestadorData()
+    {
+        return $this->prestadorData;
+    }
+
+    /**
+     * Update prestador data
+     *
+     * @param array $prestadorData New prestador data
+     */
+    public function setPrestadorData($prestadorData)
+    {
+        $this->prestadorData = $prestadorData;
+    }
+
+    /**
+     * Get the absolute path to the WSDL file
+     *
+     * @return string|false Absolute WSDL path or false if not found
+     */
+    public function getWsdlPath()
+    {
+        return realpath(__DIR__ . '/../' . self::LOCAL_WSDL);
+    }
+
+    /**
+     * Get SOAP client debug information
+     *
+     * @return array Debug information
+     */
+    public function getSoapDebugInfo()
+    {
+        if (!$this->soapClient) {
+            return ['error' => 'SOAP client not initialized'];
+        }
+
+        try {
+            return [
+                'last_request_headers' => $this->soapClient->__getLastRequestHeaders(),
+                'last_request' => $this->soapClient->__getLastRequest(),
+                'last_response_headers' => $this->soapClient->__getLastResponseHeaders(),
+                'last_response' => $this->soapClient->__getLastResponse(),
+                'functions' => $this->soapClient->__getFunctions(),
+                'types' => $this->soapClient->__getTypes()
+            ];
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
     }
 }

@@ -1,10 +1,11 @@
 <?php
 
 /**
- * Basic Usage Example for NFSe Betha Library
+ * Updated Basic Usage Example for NFSe Betha Library
  * 
- * This example demonstrates how to use the NFSe Betha library
- * for common operations like generating, cancelling, and consulting NFSe.
+ * This example demonstrates the new API where:
+ * - Certificate is passed as content (not file path)
+ * - Prestador data is configured in constructor (no repetition)
  */
 
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -16,12 +17,24 @@ $certificatePath = $_ENV['NFSE_CERTIFICATE_PATH'] ?? '/path/to/your/certificate.
 $certificatePassword = $_ENV['NFSE_CERTIFICATE_PASSWORD'] ?? 'your-certificate-password';
 
 try {
-    // Initialize the NFSe API
-    $nfseAPI = new NFSeBetha($certificatePath, $certificatePassword);
+    // Read certificate content
+    $certificateContent = file_get_contents($certificatePath);
+    if ($certificateContent === false) {
+        throw new Exception("Unable to read certificate file: $certificatePath");
+    }
+
+    // Define prestador data once (no more repetition!)
+    $prestadorData = [
+        'cnpj' => '20002537000171',
+        'inscricao_municipal' => '12345'
+    ];
+
+    // Initialize the NFSe API with certificate content and prestador data
+    $nfseAPI = new NFSeBetha($certificateContent, $certificatePassword, $prestadorData);
     
-    echo "=== NFSe Betha Library - Basic Usage Examples ===\n\n";
+    echo "=== NFSe Betha Library - Updated API Examples ===\n\n";
     
-    // Example 1: Generate NFSe
+    // Example 1: Generate NFSe (no prestador needed in data!)
     echo "1. Generating NFSe...\n";
     
     $rpsData = [
@@ -48,10 +61,7 @@ try {
             'codigo_municipio' => '4204608',
             'exigibilidade_iss' => '1'
         ],
-        'prestador' => [
-            'cnpj' => '20002537000171',
-            'inscricao_municipal' => '12345'
-        ],
+        // No 'prestador' needed here - uses constructor data!
         'tomador' => [
             'identificacao' => [
                 'cnpj' => '02509015000105',
@@ -75,11 +85,11 @@ try {
     
     if ($nfse !== false) {
         echo "✅ NFSe generated successfully!\n";
-        echo "   Number: " . $nfse['ListaNfse']['CompNfse']['Nfse']['InfNfse']['Numero'] . "\n";
-        echo "   Verification Code: " . $nfse['ListaNfse']['CompNfse']['Nfse']['InfNfse']['CodigoVerificacao'] . "\n";
-        echo "   Issue Date: " . $nfse['ListaNfse']['CompNfse']['Nfse']['InfNfse']['DataEmissao'] . "\n";
+        echo "   Number: " . ($nfse['ListaNfse']['CompNfse']['Nfse']['InfNfse']['Numero'] ?? 'N/A') . "\n";
+        echo "   Verification Code: " . ($nfse['ListaNfse']['CompNfse']['Nfse']['InfNfse']['CodigoVerificacao'] ?? 'N/A') . "\n";
+        echo "   Issue Date: " . ($nfse['ListaNfse']['CompNfse']['Nfse']['InfNfse']['DataEmissao'] ?? 'N/A') . "\n";
         
-        $nfseNumber = $nfse['ListaNfse']['CompNfse']['Nfse']['InfNfse']['Numero'];
+        $nfseNumber = $nfse['ListaNfse']['CompNfse']['Nfse']['InfNfse']['Numero'] ?? null;
     } else {
         echo "❌ Error generating NFSe: " . $nfseAPI->getLastError() . "\n";
         return;
@@ -87,14 +97,11 @@ try {
     
     echo "\n";
     
-    // Example 2: Consult NFSe by Range
+    // Example 2: Consult NFSe by Range (no prestador needed!)
     echo "2. Consulting NFSe by range...\n";
     
     $consultationParams = [
-        'prestador' => [
-            'cnpj' => '20002537000171',
-            'inscricao_municipal' => '12345'
-        ],
+        // No 'prestador' needed here - uses constructor data!
         'faixa' => [
             'numero_inicial' => '1',
             'numero_final' => '10'
@@ -119,16 +126,13 @@ try {
     
     echo "\n";
     
-    // Example 3: Cancel NFSe (if we have one to cancel)
+    // Example 3: Cancel NFSe (no prestador needed!)
     if (isset($nfseNumber)) {
         echo "3. Cancelling NFSe...\n";
         
         $cancelData = [
             'numero' => $nfseNumber,
-            'prestador' => [
-                'cnpj' => '20002537000171',
-                'inscricao_municipal' => '12345'
-            ],
+            // No 'prestador' needed here - uses constructor data!
             'codigo_municipio' => '4204608',
             'codigo_cancelamento' => '1' // 1 = Error in issuance
         ];
@@ -137,7 +141,7 @@ try {
         
         if ($cancellation !== false) {
             echo "✅ NFSe cancelled successfully!\n";
-            echo "   Cancellation Date: " . $cancellation['RetCancelamento']['NfseCancelamento']['Confirmacao']['DataHora'] . "\n";
+            echo "   Cancellation Date: " . ($cancellation['RetCancelamento']['NfseCancelamento']['Confirmacao']['DataHora'] ?? 'N/A') . "\n";
         } else {
             echo "❌ Error cancelling NFSe: " . $nfseAPI->getLastError() . "\n";
         }
@@ -145,8 +149,37 @@ try {
     
     echo "\n";
     
-    // Example 4: Test Connection
-    echo "4. Testing connection...\n";
+    // Example 4: Consult NFSe by Service Provider (minimal parameters!)
+    echo "4. Consulting NFSe by service provider...\n";
+    
+    $serviceConsultationParams = [
+        // No 'prestador' needed here - uses constructor data!
+        'periodo_emissao' => [
+            'data_inicial' => date('Y-m-01'), // First day of current month
+            'data_final' => date('Y-m-d')     // Today
+        ],
+        'pagina' => '1'
+    ];
+    
+    $serviceConsultation = $nfseAPI->consultarNfseServicoPrestado($serviceConsultationParams);
+    
+    if ($serviceConsultation !== false) {
+        echo "✅ Service consultation successful!\n";
+        if (isset($serviceConsultation['ListaNfse'])) {
+            $count = is_array($serviceConsultation['ListaNfse']['CompNfse']) ? 
+                     count($serviceConsultation['ListaNfse']['CompNfse']) : 1;
+            echo "   Found {$count} NFSe(s) for this period\n";
+        } else {
+            echo "   No NFSe found for this period\n";
+        }
+    } else {
+        echo "❌ Error consulting service NFSe: " . $nfseAPI->getLastError() . "\n";
+    }
+    
+    echo "\n";
+    
+    // Example 5: Test Connection
+    echo "5. Testing connection...\n";
     
     $connectionTest = $nfseAPI->testConnection();
     
@@ -160,6 +193,14 @@ try {
         echo "   HTTP Code: " . $connectionTest['http_code'] . "\n";
     }
     
+    echo "\n";
+    
+    // Example 6: Show prestador data
+    echo "6. Current prestador configuration...\n";
+    $currentPrestador = $nfseAPI->getPrestadorData();
+    echo "   CNPJ: " . $currentPrestador['cnpj'] . "\n";
+    echo "   Inscrição Municipal: " . $currentPrestador['inscricao_municipal'] . "\n";
+    
     echo "\n=== Examples completed ===\n";
     
 } catch (Exception $e) {
@@ -168,9 +209,15 @@ try {
 }
 
 echo "\n";
-echo "💡 Tips:\n";
-echo "   - Store certificates outside web root\n";
-echo "   - Use environment variables for sensitive data\n";
-echo "   - Monitor certificate expiration dates\n";
-echo "   - Implement proper error logging in production\n";
-echo "   - Test thoroughly in sandbox environment\n"; 
+echo "🎉 Improvements in this version:\n";
+echo "   ✅ Certificate passed as content (more secure, no file path dependencies)\n";
+echo "   ✅ Prestador data configured once in constructor\n";
+echo "   ✅ No repetitive prestador arrays in method calls\n";
+echo "   ✅ Cleaner, more maintainable code\n";
+echo "   ✅ Better encapsulation and separation of concerns\n";
+echo "\n";
+echo "💡 Migration tips:\n";
+echo "   - Read certificate file content: file_get_contents(\$certificatePath)\n";
+echo "   - Define prestador data once in constructor\n";
+echo "   - Remove 'prestador' arrays from method parameters\n";
+echo "   - Use setPrestadorData() to change prestador if needed\n"; 

@@ -20,7 +20,7 @@ use DOMXPath;
  */
 class XMLSigner
 {
-    private $certificatePath;
+    private $certificateContent;
     private $certificatePassword;
     private $certificateData;
     private $privateKey;
@@ -29,13 +29,13 @@ class XMLSigner
     /**
      * Constructor
      *
-     * @param string $certificatePath Path to PFX certificate
+     * @param string $certificateContent Content of PFX certificate (binary)
      * @param string $certificatePassword Certificate password
      * @throws Exception If certificate cannot be loaded
      */
-    public function __construct($certificatePath, $certificatePassword)
+    public function __construct($certificateContent, $certificatePassword)
     {
-        $this->certificatePath = $certificatePath;
+        $this->certificateContent = $certificateContent;
         $this->certificatePassword = $certificatePassword;
         
         $this->loadCertificate();
@@ -48,16 +48,11 @@ class XMLSigner
      */
     private function loadCertificate()
     {
-        if (!file_exists($this->certificatePath)) {
-            throw new Exception("Certificate file not found: {$this->certificatePath}");
+        if (empty($this->certificateContent)) {
+            throw new Exception('Certificate content is empty');
         }
 
-        $pfxContent = file_get_contents($this->certificatePath);
-        if ($pfxContent === false) {
-            throw new Exception('Unable to read certificate file');
-        }
-
-        if (!openssl_pkcs12_read($pfxContent, $this->certificateData, $this->certificatePassword)) {
+        if (!openssl_pkcs12_read($this->certificateContent, $this->certificateData, $this->certificatePassword)) {
             throw new Exception('Unable to read certificate or incorrect password');
         }
 

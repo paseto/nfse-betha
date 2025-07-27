@@ -3,19 +3,27 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-require_once __DIR__ . '/src/NFSeBetha.php';
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Paseto\NFSeBetha\NFSeBetha;
 
 $config = [
-    'certificate_path' => __DIR__ . '/certificates/certificado.pfx',
-    'certificate_password' => 'password'
+    'certificate_path' => __DIR__ . '/../certificates/certificado.pfx',
+    'certificate_password' => '123'
 ];
 
 try {
-    $nfseAPI = new NFSeBetha($config['certificate_path'], $config['certificate_password']);
+    $certificateContent = file_get_contents($config['certificate_path']);
+    $prestadorData = [
+        'cnpj' => '30002237001172',
+        'inscricao_municipal' => '21490'
+    ];
+    $nfseAPI = new NFSeBetha($certificateContent, $config['certificate_password'], $prestadorData);
 
     $r = $nfseAPI->gerarNfse([
         'rps' => [
-            'numero' => '2',
+            'numero' => '6',
             'serie' => '1',
             'tipo' => '1',
             'data_emissao' => date('Y-m-d'),
@@ -38,8 +46,8 @@ try {
             'exigibilidade_iss' => '1'
         ],
         'prestador' => [
-            'cnpj' => '20002537000171',
-            'inscricao_municipal' => '12345'
+            'cnpj' => '30002237000172',
+            'inscricao_municipal' => '51490'
         ],
         'tomador' => [
             'identificacao' => [

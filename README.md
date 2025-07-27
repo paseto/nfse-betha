@@ -4,6 +4,12 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/paseto/nfse-betha.svg?style=flat-square)](https://packagist.org/packages/paseto/nfse-betha)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 
+
+- Wrapper for the non working version of NFSe Betha API in PHP. https://iss.ajuda.betha.cloud/e-nota-cloud/ajuda/outros-conteudos/web-service/
+
+- Layout: **Abrasf 2.02** with modified wsdl
+
+
 A comprehensive PHP library for NFSe Betha integration with XML digital signing support using ICP Brasil certificates.
 
 ## Features
@@ -17,6 +23,9 @@ A comprehensive PHP library for NFSe Betha integration with XML digital signing 
 - 📊 **Comprehensive Error Handling** and validation
 - 📁 **Local WSDL Support** for reliable offline development
 - 🚀 **Production Ready** with extensive testing
+- 🔒 **Secure Certificate Handling** - accepts certificate content (not file paths)
+- 🎯 **Simplified API** - prestador data configured once in constructor
+- 🧹 **Clean Code** - no repetitive prestador arrays in method calls
 
 ## Requirements
 
@@ -45,10 +54,19 @@ composer require paseto/nfse-betha
 
 use Paseto\NFSeBetha\NFSeBetha;
 
-// Initialize the API
-$nfseAPI = new NFSeBetha($certificatePath, $certificatePassword);
+// Read certificate content
+$certificateContent = file_get_contents('/path/to/your/certificate.pfx');
 
-// Generate NFSe
+// Define prestador data once
+$prestadorData = [
+    'cnpj' => '12345678000195',
+    'inscricao_municipal' => '12345'
+];
+
+// Initialize the API with certificate content and prestador data
+$nfseAPI = new NFSeBetha($certificateContent, $certificatePassword, $prestadorData);
+
+// Generate NFSe (no prestador needed - uses constructor data!)
 $nfse = $nfseAPI->gerarNfse([
     'rps' => [
         'numero' => '123',
@@ -72,10 +90,6 @@ $nfse = $nfseAPI->gerarNfse([
         'discriminacao' => 'Serviços de consultoria em tecnologia da informação',
         'codigo_municipio' => '4204608',
         'exigibilidade_iss' => '1'
-    ],
-    'prestador' => [
-        'cnpj' => '20002537000171',
-        'inscricao_municipal' => '12345'
     ],
     'tomador' => [
         'identificacao' => [
@@ -110,11 +124,7 @@ if ($nfse !== false) {
 ```php
 // Cancel NFSe
 $cancellation = $nfseAPI->cancelarNfse([
-    'numero' => '1',
-    'prestador' => [
-        'cnpj' => '20002537000171',
-        'inscricao_municipal' => '12345'
-    ],
+    'numero' => '1',    
     'codigo_municipio' => '4204608',
     'codigo_cancelamento' => '1'
 ]);
@@ -130,11 +140,7 @@ if ($cancellation !== false) {
 
 ```php
 // Consult NFSe by range
-$consultation = $nfseAPI->consultarNfseFaixa([
-    'prestador' => [
-        'cnpj' => '20002537000171',
-        'inscricao_municipal' => '12345'
-    ],
+$consultation = $nfseAPI->consultarNfseFaixa([    
     'faixa' => [
         'numero_inicial' => '1',
         'numero_final' => '10'
@@ -142,18 +148,6 @@ $consultation = $nfseAPI->consultarNfseFaixa([
     'pagina' => '1'
 ]);
 
-// Consult NFSe by service provider
-$consultation = $nfseAPI->consultarNfseServicoPrestado([
-    'prestador' => [
-        'cnpj' => '20002537000171',
-        'inscricao_municipal' => '12345'
-    ],
-    'periodo_emissao' => [
-        'data_inicial' => '2024-01-01',
-        'data_final' => '2024-12-31'
-    ],
-    'pagina' => '1'
-]);
 ```
 
 ## Configuration

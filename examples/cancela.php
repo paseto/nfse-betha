@@ -1,9 +1,8 @@
 <?php
-// Set error reporting for development
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
-require_once __DIR__ . '/src/NFSeBetha.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Paseto\NFSeBetha\NFSeBetha;
 
 $config = [
     'certificate_path' => __DIR__ . '/certificates/certificado.pfx',
@@ -11,14 +10,15 @@ $config = [
 ];
 
 try {
-    $nfseAPI = new NFSeBetha($config['certificate_path'], $config['certificate_password']);
+    $certificateContent = file_get_contents($config['certificate_path']);
+    $prestadorData = [
+        'cnpj' => '30002237001172',
+        'inscricao_municipal' => '21490'
+    ];
+    $nfseAPI = new NFSeBetha($certificateContent, $config['certificate_password'], $prestadorData);
 
     $r = $nfseAPI->cancelarNfse([
         'numero' => '2', // NFSe number to cancel
-        'prestador' => [
-            'cnpj' => '20002537000171',
-            'inscricao_municipal' => '12345'
-        ],
         'codigo_municipio' => '4204608',
         'codigo_cancelamento' => '1' // Optional: 1=Erro na emissão
     ]);
