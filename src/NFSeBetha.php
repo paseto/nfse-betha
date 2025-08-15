@@ -28,6 +28,12 @@ class NFSeBetha implements NFSeBethaInterface
     private $lastError;
     private $useCurlMode = false;
     private $xmlSigner;
+    
+    // Timeout configuration properties
+    private $curlTimeout = 30;
+    private $soapTimeout = 30;
+    private $soapConnectionTimeout = 30;
+    private $testConnectionTimeout = 5;
 
     // Betha NFSe service endpoints
 //    const LOCAL_WSDL = 'wsdl/modified_wsdl.xml';
@@ -119,13 +125,13 @@ class NFSeBetha implements NFSeBethaInterface
             'encoding' => 'UTF-8',
             'trace' => true,
             'exceptions' => true,
-            'connection_timeout' => 30,
+            'connection_timeout' => $this->soapConnectionTimeout,
             'cache_wsdl' => WSDL_CACHE_NONE,
             'location' => $this->serviceUrl,
             // Don't use certificate for WSDL loading - only for service calls
             'stream_context' => stream_context_create([
                 'http' => [
-                    'timeout' => 30,
+                    'timeout' => $this->soapTimeout,
                     'user_agent' => 'NFSeBetha-PHP-Client/2.0'
                 ]
             ])
@@ -639,7 +645,7 @@ class NFSeBetha implements NFSeBethaInterface
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => $soapEnvelope,
-                CURLOPT_TIMEOUT => 30,
+                CURLOPT_TIMEOUT => $this->curlTimeout,
                 CURLOPT_SSL_VERIFYPEER => false,
                 CURLOPT_SSL_VERIFYHOST => false,
                 CURLOPT_SSLCERT => $tempFiles['cert'],
@@ -806,7 +812,7 @@ class NFSeBetha implements NFSeBethaInterface
         curl_setopt_array($ch, [
             CURLOPT_URL => $this->serviceUrl,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 5,
+            CURLOPT_TIMEOUT => $this->testConnectionTimeout,
             CURLOPT_NOBODY => true,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => false,
@@ -905,5 +911,73 @@ class NFSeBetha implements NFSeBethaInterface
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Set cURL timeout for service requests
+     *
+     * @param int $timeout Timeout in seconds (default: 30)
+     */
+    public function setCurlTimeout(int $timeout)
+    {
+        $this->curlTimeout = max(1, $timeout);
+    }
+
+    /**
+     * Set SOAP timeout for service requests
+     *
+     * @param int $timeout Timeout in seconds (default: 30)
+     */
+    public function setSoapTimeout(int $timeout)
+    {
+        $this->soapTimeout = max(1, $timeout);
+    }
+
+    /**
+     * Set SOAP connection timeout
+     *
+     * @param int $timeout Connection timeout in seconds (default: 30)
+     */
+    public function setSoapConnectionTimeout(int $timeout)
+    {
+        $this->soapConnectionTimeout = max(1, $timeout);
+    }
+
+    /**
+     * Set test connection timeout
+     *
+     * @param int $timeout Timeout in seconds (default: 5)
+     */
+    public function setTestConnectionTimeout(int $timeout)
+    {
+        $this->testConnectionTimeout = max(1, $timeout);
+    }
+
+    /**
+     * Set all timeouts at once
+     *
+     * @param int $timeout Timeout in seconds for all operations
+     */
+    public function setTimeout(int $timeout)
+    {
+        $this->curlTimeout = max(1, $timeout);
+        $this->soapTimeout = max(1, $timeout);
+        $this->soapConnectionTimeout = max(1, $timeout);
+        $this->testConnectionTimeout = max(1, $timeout);
+    }
+
+    /**
+     * Get current timeout configuration
+     *
+     * @return array Current timeout values
+     */
+    public function getTimeoutConfig()
+    {
+        return [
+            'curl_timeout' => $this->curlTimeout,
+            'soap_timeout' => $this->soapTimeout,
+            'soap_connection_timeout' => $this->soapConnectionTimeout,
+            'test_connection_timeout' => $this->testConnectionTimeout
+        ];
     }
 }
