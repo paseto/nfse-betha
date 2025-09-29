@@ -28,7 +28,7 @@ class NFSeBetha implements NFSeBethaInterface
     private $lastError;
     private $useCurlMode = false;
     private $xmlSigner;
-    
+
     // Timeout configuration properties
     private $curlTimeout = 30;
     private $soapTimeout = 30;
@@ -205,6 +205,10 @@ class NFSeBetha implements NFSeBethaInterface
             // Build and sign the RPS XML
             $rpsXML = $this->buildGerarNfseEnvio($rpsData);
             $signedRpsXML = $this->xmlSigner->signRPS($rpsXML);
+
+            //save xml to debug errors
+//            file_put_contents(__DIR__.'/../gerar_nfse.xml', $signedRpsXML);
+
 
             if ($this->useCurlMode) {
                 return $this->sendCurlRequest('GerarNfse', $signedRpsXML);
@@ -415,7 +419,7 @@ class NFSeBetha implements NFSeBethaInterface
      */
     private function buildGerarNfseEnvio($rpsData)
     {
-        $xml = '<GerarNfseEnvio xmlns="' . self::NAMESPACE_URI . '">';
+        $xml = '<GerarNfseEnvio xmlns="' . self::NAMESPACE_URI . '" xmlns:dsig="http://www.w3.org/2000/09/xmldsig#">';
         $xml .= $this->buildRps($rpsData);
         $xml .= '</GerarNfseEnvio>';
 

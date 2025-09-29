@@ -167,55 +167,55 @@ class XMLSigner
      */
     private function createSignatureElement($dom, $elementId, $digest)
     {
-        // Create Signature element
-        $signature = $dom->createElementNS('http://www.w3.org/2000/09/xmldsig#', 'Signature');
+        // Create Signature element with proper namespace
+        $signature = $dom->createElementNS('http://www.w3.org/2000/09/xmldsig#', 'dsig:Signature');
         
-        // Create SignedInfo
-        $signedInfo = $dom->createElement('SignedInfo');
+        // Create SignedInfo with proper namespace
+        $signedInfo = $dom->createElementNS('http://www.w3.org/2000/09/xmldsig#', 'dsig:SignedInfo');
         $signature->appendChild($signedInfo);
 
-        // CanonicalizationMethod
-        $canonicalizationMethod = $dom->createElement('CanonicalizationMethod');
+        // CanonicalizationMethod with proper namespace
+        $canonicalizationMethod = $dom->createElementNS('http://www.w3.org/2000/09/xmldsig#', 'dsig:CanonicalizationMethod');
         $canonicalizationMethod->setAttribute('Algorithm', 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315');
         $signedInfo->appendChild($canonicalizationMethod);
 
-        // SignatureMethod
-        $signatureMethod = $dom->createElement('SignatureMethod');
+        // SignatureMethod with proper namespace
+        $signatureMethod = $dom->createElementNS('http://www.w3.org/2000/09/xmldsig#', 'dsig:SignatureMethod');
         $signatureMethod->setAttribute('Algorithm', 'http://www.w3.org/2000/09/xmldsig#rsa-sha1');
         $signedInfo->appendChild($signatureMethod);
 
-        // Reference
-        $reference = $dom->createElement('Reference');
+        // Reference with proper namespace
+        $reference = $dom->createElementNS('http://www.w3.org/2000/09/xmldsig#', 'dsig:Reference');
         $reference->setAttribute('URI', '#' . $elementId);
         $signedInfo->appendChild($reference);
 
-        // Transforms
-        $transforms = $dom->createElement('Transforms');
+        // Transforms with proper namespace
+        $transforms = $dom->createElementNS('http://www.w3.org/2000/09/xmldsig#', 'dsig:Transforms');
         $reference->appendChild($transforms);
 
-        $transform = $dom->createElement('Transform');
+        $transform = $dom->createElementNS('http://www.w3.org/2000/09/xmldsig#', 'dsig:Transform');
         $transform->setAttribute('Algorithm', 'http://www.w3.org/2000/09/xmldsig#enveloped-signature');
         $transforms->appendChild($transform);
 
-        $transform2 = $dom->createElement('Transform');
+        $transform2 = $dom->createElementNS('http://www.w3.org/2000/09/xmldsig#', 'dsig:Transform');
         $transform2->setAttribute('Algorithm', 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315');
         $transforms->appendChild($transform2);
 
-        // DigestMethod
-        $digestMethod = $dom->createElement('DigestMethod');
+        // DigestMethod with proper namespace
+        $digestMethod = $dom->createElementNS('http://www.w3.org/2000/09/xmldsig#', 'dsig:DigestMethod');
         $digestMethod->setAttribute('Algorithm', 'http://www.w3.org/2000/09/xmldsig#sha1');
         $reference->appendChild($digestMethod);
 
-        // DigestValue
-        $digestValue = $dom->createElement('DigestValue', $digest);
+        // DigestValue with proper namespace
+        $digestValue = $dom->createElementNS('http://www.w3.org/2000/09/xmldsig#', 'dsig:DigestValue', $digest);
         $reference->appendChild($digestValue);
 
-        // SignatureValue (placeholder)
-        $signatureValue = $dom->createElement('SignatureValue');
+        // SignatureValue with proper namespace
+        $signatureValue = $dom->createElementNS('http://www.w3.org/2000/09/xmldsig#', 'dsig:SignatureValue');
         $signature->appendChild($signatureValue);
 
-        // KeyInfo
-        $keyInfo = $dom->createElement('KeyInfo');
+        // KeyInfo with proper namespace
+        $keyInfo = $dom->createElementNS('http://www.w3.org/2000/09/xmldsig#', 'dsig:KeyInfo');
         $signature->appendChild($keyInfo);
 
         return $signature;
@@ -229,17 +229,27 @@ class XMLSigner
     private function addCertificateInfo($signature)
     {
         $dom = $signature->ownerDocument;
-        $keyInfo = $signature->getElementsByTagName('KeyInfo')->item(0);
+        
+        // Find KeyInfo element using XPath to handle namespaces properly
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('dsig', 'http://www.w3.org/2000/09/xmldsig#');
+        $keyInfoNodes = $xpath->query('dsig:KeyInfo', $signature);
+        
+        if ($keyInfoNodes->length === 0) {
+            throw new Exception('KeyInfo element not found in signature');
+        }
+        
+        $keyInfo = $keyInfoNodes->item(0);
 
-        // X509Data
-        $x509Data = $dom->createElement('X509Data');
+        // X509Data with proper namespace
+        $x509Data = $dom->createElementNS('http://www.w3.org/2000/09/xmldsig#', 'dsig:X509Data');
         $keyInfo->appendChild($x509Data);
 
-        // X509Certificate
+        // X509Certificate with proper namespace
         $certPem = $this->certificateData['cert'];
         $certContent = str_replace(['-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----', "\n", "\r"], '', $certPem);
         
-        $x509Certificate = $dom->createElement('X509Certificate', $certContent);
+        $x509Certificate = $dom->createElementNS('http://www.w3.org/2000/09/xmldsig#', 'dsig:X509Certificate', $certContent);
         $x509Data->appendChild($x509Certificate);
     }
 
@@ -280,7 +290,7 @@ class XMLSigner
             $infElement->setAttribute('Id', 'InfDeclaracaoPrestacaoServico');
         }
 
-        // Find the Rps element (parent of InfDeclaracaoPrestacaoServico)
+        // Find the Rps element (parent of InfDeclaracaoPrestacaoServico) to place signature as sibling
         $rpsElements = $xpath->query('//ns:Rps');
         if ($rpsElements->length === 0) {
             $rpsElements = $xpath->query('//Rps');
@@ -291,7 +301,7 @@ class XMLSigner
 
         $rpsElement = $rpsElements->item(0);
 
-        // Create signature for InfDeclaracaoPrestacaoServico but place it in Rps
+        // Create signature for InfDeclaracaoPrestacaoServico and place it as sibling inside Rps
         $canonicalizedXML = $infElement->C14N(true, false);
         $digest = base64_encode(hash('sha1', $canonicalizedXML, true));
 
@@ -314,7 +324,7 @@ class XMLSigner
         // Add X509 certificate data
         $this->addCertificateInfo($signature);
 
-        // Append signature to the Rps element (not InfDeclaracaoPrestacaoServico)
+        // Append signature to the Rps element as sibling of InfDeclaracaoPrestacaoServico (correct placement per XSD schema)
         $rpsElement->appendChild($signature);
 
         // Save XML without declaration for embedding in SOAP
